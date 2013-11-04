@@ -41,12 +41,12 @@
     return self;
 }
 
-- (id)initWithCoder:(NSCoder *)aDecoder 
+- (id)initWithCoder:(NSCoder *)aDecoder
 {
     self = [super initWithCoder:aDecoder];
     if (self) {
         [self commonInit];
-        
+
         // force setter to be called on a placeholder defined in a NIB/Storyboard
     	if (self.placeholder) {
         	self.placeholder = self.placeholder;
@@ -57,10 +57,12 @@
 
 - (void)commonInit
 {
+    self.contentVerticalAlignment = UIControlContentVerticalAlignmentTop;
+
     _floatingLabel = [UILabel new];
     _floatingLabel.alpha = 0.0f;
     [self addSubview:_floatingLabel];
-	
+
     // some basic default fonts/colors
     _floatingLabel.font = [UIFont boldSystemFontOfSize:12.0f];
     _floatingLabelTextColor = [UIColor grayColor];
@@ -69,7 +71,7 @@
 - (void)setPlaceholder:(NSString *)placeholder
 {
     [super setPlaceholder:placeholder];
-    
+
     _floatingLabel.text = placeholder;
     if (self.floatingLabelFont)
     {
@@ -77,16 +79,16 @@
     }
 
     [_floatingLabel sizeToFit];
-    
+
     CGFloat originX = 0.f;
-    
+
     if (self.textAlignment == NSTextAlignmentCenter) {
         originX = (self.frame.size.width/2) - (_floatingLabel.frame.size.width/2);
     }
     else if (self.textAlignment == NSTextAlignmentRight) {
         originX = self.frame.size.width - _floatingLabel.frame.size.width;
     }
-    
+
     _floatingLabel.frame = CGRectMake(originX, _floatingLabel.font.lineHeight,
                                       _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
 }
@@ -95,55 +97,50 @@
 {
     if ([self.text length] > 0)
     {
-        return UIEdgeInsetsInsetRect([super textRectForBounds:bounds], UIEdgeInsetsMake(_floatingLabel.font.lineHeight, 0.0f, 0.0f, 0.0f));
+        return CGRectMake(0, 7.0f + _floatingLabel.font.lineHeight - 2, bounds.size.width, self.font.lineHeight + 2);
     }
     else
     {
-        return [super textRectForBounds:bounds];
+        return CGRectMake(0, (bounds.size.height - self.font.lineHeight) / 2, bounds.size.width, self.font.lineHeight + 2);
     }
 }
 
 - (CGRect)editingRectForBounds:(CGRect)bounds
 {
-    if ([self.text length] > 0)
-    {
-        CGFloat yOffset = 0.4f;
-        if (![self respondsToSelector:@selector(tintColor)])
-        {
-            yOffset = -8;
-        }
-        return UIEdgeInsetsInsetRect([super editingRectForBounds:bounds], UIEdgeInsetsMake(_floatingLabel.font.lineHeight + yOffset, 0.0f, 0.0f, 0.0f));
-    }
-    else
-    {
-        return [super editingRectForBounds:bounds];
-    }
+    return [self textRectForBounds:bounds];
 }
 
 
 - (void)layoutSubviews
 {
     [super layoutSubviews];
-    
-    if (self.isFirstResponder) {
-        if (!self.text || 0 == [self.text length]) {
-            [self hideFloatingLabel];
+
+    if (self.isFirstResponder)
+    {
+        if (!self.text || 0 == [self.text length])
+        {
+            [self hideFloatingLabelAnimated:YES];
         }
-        else {
-            if (self.floatingLabelFont) {
+        else
+        {
+            if (self.floatingLabelFont)
+            {
                 _floatingLabel.font = self.floatingLabelFont;
             }
             [self setLabelActiveColor];
-            [self showFloatingLabel];
+            [self showFloatingLabelAnimated:YES];
         }
     }
-    else {
+    else
+    {
         _floatingLabel.textColor = self.floatingLabelTextColor;
-        if (!self.text || 0 == [self.text length]) {
-            [self hideFloatingLabel];
+        if (!self.text || 0 == [self.text length])
+        {
+            [self hideFloatingLabelAnimated:NO];
         }
-        else {
-            [self showFloatingLabel];
+        else
+        {
+            [self showFloatingLabelAnimated:NO];
         }
     }
 }
@@ -158,43 +155,62 @@
     }
 }
 
-- (void)showFloatingLabel
+- (void)showFloatingLabelAnimated:(BOOL)animated
 {
     [self setLabelOriginForTextAlignment];
-    
-    [UIView animateWithDuration:0.15f delay:0.0f options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseOut animations:^{
+
+    _floatingLabel.hidden = NO;
+    if (animated)
+    {
+        [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseOut animations:^
+         {
+             _floatingLabel.alpha = 1.0f;
+             _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, 7.0f, _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
+         } completion:nil];
+    }
+    else
+    {
         _floatingLabel.alpha = 1.0f;
-            
-        _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, 7.0f,
-                                          _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
-    } completion:nil];
+        _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, 7.0f, _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
+    }
+
 }
 
-- (void)hideFloatingLabel
+- (void)hideFloatingLabelAnimated:(BOOL)animated
 {
     [self setLabelOriginForTextAlignment];
-    
-    [UIView animateWithDuration:0.15f delay:0.0f options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseIn animations:^{
+
+    if (animated)
+    {
+        [UIView animateWithDuration:0.1f delay:0.0f options:UIViewAnimationOptionBeginFromCurrentState|UIViewAnimationOptionCurveEaseIn animations:^
+         {
+             _floatingLabel.alpha = 0.0f;
+         } completion:^(BOOL finished)
+         {
+             _floatingLabel.hidden = YES;
+             _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, _floatingLabel.font.lineHeight, _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
+         }];
+    }
+    else
+    {
         _floatingLabel.alpha = 0.0f;
-    } completion:^(BOOL finished) {
-        _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, _floatingLabel.font.lineHeight,
-                                          _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
-    }];
+        _floatingLabel.hidden = YES;
+        _floatingLabel.frame = CGRectMake(_floatingLabel.frame.origin.x, _floatingLabel.font.lineHeight, _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
+    }
 }
 
 - (void)setLabelOriginForTextAlignment
 {
     CGFloat originX = _floatingLabel.frame.origin.x;
-    
+
     if (self.textAlignment == NSTextAlignmentCenter) {
         originX = (self.frame.size.width/2) - (_floatingLabel.frame.size.width/2);
     }
     else if (self.textAlignment == NSTextAlignmentRight) {
         originX = self.frame.size.width - _floatingLabel.frame.size.width;
     }
-    
-    _floatingLabel.frame = CGRectMake(originX, _floatingLabel.frame.origin.y,
-                                      _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
+
+    _floatingLabel.frame = CGRectMake(originX, _floatingLabel.frame.origin.y, _floatingLabel.frame.size.width, _floatingLabel.frame.size.height);
 }
 
 @end

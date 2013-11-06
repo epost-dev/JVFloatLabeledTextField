@@ -95,19 +95,29 @@
 
 - (CGRect)textRectForBounds:(CGRect)bounds
 {
+    CGRect origTextRect = [super textRectForBounds:bounds];
+
     if ([self.text length] > 0)
     {
-        return CGRectMake(0, 7.0f + _floatingLabel.font.lineHeight - 2, bounds.size.width, self.font.lineHeight + 2);
+        return CGRectMake(0, 7.0f + _floatingLabel.font.lineHeight - 2, origTextRect.size.width, self.font.lineHeight + 2);
     }
     else
     {
-        return CGRectMake(0, (bounds.size.height - self.font.lineHeight) / 2, bounds.size.width, self.font.lineHeight + 2);
+        return CGRectMake(0, (bounds.size.height - self.font.lineHeight) / 2, origTextRect.size.width, self.font.lineHeight + 2);
     }
 }
 
 - (CGRect)editingRectForBounds:(CGRect)bounds
 {
     return [self textRectForBounds:bounds];
+}
+
+
+- (CGRect)clearButtonRectForBounds:(CGRect)bounds
+{
+    CGRect rect = [super clearButtonRectForBounds:bounds];
+    rect = CGRectMake(rect.origin.x, rect.origin.y + (_floatingLabel.font.lineHeight / 2.0) + (_floatingLabelYPadding.floatValue / 2.0f), rect.size.width, rect.size.height);
+    return rect;
 }
 
 

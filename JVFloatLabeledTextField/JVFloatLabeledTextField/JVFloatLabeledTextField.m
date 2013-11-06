@@ -64,7 +64,7 @@
     [self addSubview:_floatingLabel];
 
     // some basic default fonts/colors
-    _floatingLabel.font = [UIFont boldSystemFontOfSize:12.0f];
+    _floatingLabel.font = [UIFont systemFontOfSize:12.0f];
     _floatingLabelTextColor = [UIColor grayColor];
 }
 
